@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'basicinfo.apps.BasicinfoConfig',
+    'equipment.apps.EquipmentConfig',
 
     'django.contrib.admin',
     'django.contrib.auth',
