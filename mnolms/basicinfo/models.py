@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey, ReverseGenericManyToOneDescriptor
 
+
 class Net(models.Model):
     """
     台网信息
@@ -25,6 +26,9 @@ class Net(models.Model):
     c_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     m_time = models.DateTimeField(auto_now=True, verbose_name="更新日期")
 
+    def __str__(self):
+        return "{code}-{name}".format(code=self.code, name=self.name)
+
 
 class Station(models.Model):
     """
@@ -42,10 +46,18 @@ class Station(models.Model):
     longitude = models.FloatField(verbose_name="台站经度")
     latitude = models.FloatField(verbose_name="台站纬度")
     altitude = models.FloatField(verbose_name="台站高程")
-    status = models.PositiveSmallIntegerField(choices=STATION_STATUS, default=0, verbose_name="台站状态")
+    status = models.PositiveSmallIntegerField(
+        choices=STATION_STATUS,
+        default=0,
+        verbose_name="台站状态")
     describe = models.CharField(max_length=512, null=True, blank=True, verbose_name="台站描述")
     location = models.CharField(max_length=512, verbose_name="位置描述")
-    net = models.ForeignKey('Net', blank=True, null=True, on_delete=models.SET_NULL, verbose_name="所属台网")
+    net = models.ForeignKey(
+        'Net',
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name="所属台网")
 
     caretaker = models.ManyToManyField('Caretaker', verbose_name="看护人")
 
@@ -54,11 +66,38 @@ class Station(models.Model):
     c_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     m_time = models.DateTimeField(auto_now=True, verbose_name="更新日期")
 
-    power_supply = models.ManyToManyField("equipment.PowerSupply")
+    # power_supply = models.ManyToManyField("equipment.PowerSupply")
 
     # power_type = models.ForeignKey(ContentType, blank=True, null=True, on_delete=models.SET_NULL)
     # power_id = models.PositiveIntegerField(blank=True, null=True, verbose_name="电源系统")
     # power_obj = GenericForeignKey("power_type", "power_id")
+
+    def __str__(self):
+        return "{code}-{zh_name}({en_name})".format(
+            code=self.code,
+            zh_name=self.zh_name,
+            en_name=self.en_name)
+
+
+class EquipmentItem(models.Model):
+    """
+    每个台站的设备清单
+    """
+    station = models.ForeignKey(
+        Station,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='设备清单')
+    equipment = models.ForeignKey(
+        'equipment.Equipment',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return '{id}'.format(id=self.id)
 
 
 class Caretaker(models.Model):
@@ -75,7 +114,7 @@ class Caretaker(models.Model):
     gender = models.PositiveSmallIntegerField(choices=((0, '男'), (1, '女')), default=0, verbose_name="性别")
     id_card = models.CharField(max_length=64, verbose_name="身份证号")
     address = models.CharField(max_length=256, verbose_name="地址")
-    phone = models.CharField(max_length=64, verbose_name="电话")
+    # phone = models.CharField(max_length=64, verbose_name="电话")
 
     status = models.PositiveSmallIntegerField(choices=CARETAKE_STATUS, verbose_name="状态")
 
@@ -85,6 +124,25 @@ class Caretaker(models.Model):
     care_payments = models.ManyToManyField('CarePayment', verbose_name="看护费")
 
     remark = models.CharField(max_length=256, blank=True, null=True, verbose_name="备注")
+
+    def __str__(self):
+        return "{name}({id_card})".format(name=self.name, id_card=self.id_card)
+
+
+class Phone(models.Model):
+    """
+    电话号码
+    """
+    number = models.CharField(max_length=20, verbose_name="号码")
+    owner = models.ForeignKey(
+        'Caretaker',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name="所有者")
+
+    def __str__(self):
+        return self.number
 
 
 class CarePayment(models.Model):
@@ -96,3 +154,6 @@ class CarePayment(models.Model):
     end_pay = models.DateField(verbose_name="支付截止日期(年-月)")
 
     pay_date = models.DateField(verbose_name="支付日期")
+
+    def __str__(self):
+        return
