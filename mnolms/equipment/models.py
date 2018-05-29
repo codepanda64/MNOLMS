@@ -1,7 +1,5 @@
 from django.db import models
 from django.contrib.contenttypes.fields import ContentType
-# from django.contrib.contenttypes.fields import GenericForeignKey
-# from django.contrib.contenttypes.fields import GenericRelation
 
 
 class Manufacturer(models.Model):
@@ -63,7 +61,6 @@ class Equipment(models.Model):
     category = models.PositiveSmallIntegerField(
         choices=CATEGORY_LIST,
         verbose_name='分类')
-    # name = models.CharField(max_length=128, verbose_name="设备名称")
     manufacturer = models.ForeignKey("Manufacturer",
                                      null=True,
                                      blank=True,

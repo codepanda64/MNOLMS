@@ -1,0 +1,53 @@
+{% extends 'seisnet/base.html' %}
+
+
+{% block content %}
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th colspan="9" scope="col"><h1 align="center">台网列表</h1></th>
+            </tr>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">台网代码</th>
+                <th scope="col">台网名</th>
+                <th scope="col">开始时间</th>
+                <th scope="col">结束时间</th>
+                <th scope="col">台网监测范围</th>
+                <th scope="col">台站数</th>
+                <th scope="col">状态</th>
+                <th scope="col">操作</th>
+            </tr>
+        </thead>
+
+        {% for network in networks %}
+        <tbody>
+            <tr>
+                <th scope="row">{{ network.pk }}</th>
+                <td>
+                    <a href="{% url 'network_detail' pk=network.pk %}">{{ network.code }}</a>
+                </td>
+                <td>{{ network.name }}</td>
+                <td>{{ network.start_time | date:"Y-m" }}</td>
+                <td>{{ network.end_time | date:"Y-m"}}</td>
+                <td>
+                    {{ network.min_latitude }}/
+                    {{ network.max_latitude }}/
+                    {{ network.min_longitude }}/
+                    {{ network.max_longitude }}
+                </td>
+                <td>
+                    {{ network.station_set.count }}
+                </td>
+                <td>{{ network.get_status_display }}</td>
+                <td>
+                    <a href="{% url 'network_edit' pk=network.pk %}">编辑</a>
+                </td>
+            </tr>
+        </tbody>
+        {% endfor %}
+
+    </table>
+
+{% endblock %}
