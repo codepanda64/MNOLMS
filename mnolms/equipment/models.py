@@ -61,6 +61,7 @@ class Equipment(models.Model):
     category = models.PositiveSmallIntegerField(
         choices=CATEGORY_LIST,
         verbose_name='分类')
+
     manufacturer = models.ForeignKey("Manufacturer",
                                      null=True,
                                      blank=True,

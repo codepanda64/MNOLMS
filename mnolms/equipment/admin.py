@@ -55,19 +55,10 @@ class ManufacturerAdmin(admin.ModelAdmin):
         queryset.update(is_deleted=True)
 
     custom_selected_delete.short_description = "删除选中项"
-    # def has_delete_permission(self, request, obj=None):
-    #     return False
 
 
-# admin.site.register(Manufacturer, ManufacturerAdmin)
-# admin.site.register(ManufacturerCategory)
-# admin.site.register(SensorModel, SensorModelAdmin)
 admin.site.register(SensorEntity)
-# admin.site.register(DataloggerModel, DataloggerModelAdmin)
 admin.site.register(DataloggerEntity)
-# admin.site.register(GPSAntenna, GPSAntennaAdmin)
-# admin.site.register(PowerSupply, PowerSupplyAdmin)
-# admin.site.register(NetworkDevice, NetworkDeviceAdmin)
 
 admin.AdminSite.site_header = '流动台站运维日志管理系统'
 admin.AdminSite.site_title = '流动台站运维日志管理系统'
