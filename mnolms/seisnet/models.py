@@ -53,8 +53,8 @@ class Station(models.Model):
         choices=STATION_STATUS,
         default=0,
         verbose_name="台站状态")
-    describe = models.CharField(max_length=512, null=True, blank=True, verbose_name="台站描述")
-    location = models.CharField(max_length=512, verbose_name="位置描述")
+    describe = models.TextField(null=True, blank=True, verbose_name="台站描述")
+    location = models.TextField(null=True, blank=True, verbose_name="位置描述")
     network = models.ForeignKey(
         'Network',
         blank=True,
@@ -76,25 +76,25 @@ class Station(models.Model):
             en_name=self.en_name)
 
 
-class EquipmentItem(models.Model):
-    """
-    每个台站的设备清单
-    """
-    station = models.ForeignKey(
-        Station,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='设备清单')
-    equipment = models.ForeignKey(
-        'equipment.Equipment',
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL)
-    quantity = models.PositiveIntegerField(default=1)
-
-    def __str__(self):
-        return '{id}'.format(id=self.id)
+# class EquipmentItem(models.Model):
+#     """
+#     每个台站的设备清单
+#     """
+#     station = models.ForeignKey(
+#         Station,
+#         null=True,
+#         blank=True,
+#         on_delete=models.SET_NULL,
+#         related_name='设备清单')
+#     equipment = models.ForeignKey(
+#         'equipment.Equipment',
+#         null=True,
+#         blank=True,
+#         on_delete=models.SET_NULL)
+#     quantity = models.PositiveIntegerField(default=1)
+#
+#     def __str__(self):
+#         return '{id}'.format(id=self.id)
 
 
 class Caretaker(models.Model):
@@ -162,7 +162,8 @@ class CarePayment(models.Model):
                                   verbose_name="看护人")
 
     def pay_months(self):
-        return self.end_pay.month - self.start_pay.month + 1
+        months = int(self.end_pay.month - self.start_pay.month + 1)
+        return months if months > 0 else months+12
 
     class Meta:
         verbose_name = "看护费支付信息"

@@ -26,7 +26,7 @@
             <tr>
                 <th scope="row">{{ network.pk }}</th>
                 <td>
-                    <a href="{% url 'network_detail' pk=network.pk %}">{{ network.code }}</a>
+                    <a href="{% url 'seis:network_detail' pk=network.pk %}">{{ network.code }}</a>
                 </td>
                 <td>{{ network.name }}</td>
                 <td>{{ network.start_time | date:"Y-m" }}</td>
@@ -42,7 +42,7 @@
                 </td>
                 <td>{{ network.get_status_display }}</td>
                 <td>
-                    <a href="{% url 'network_edit' pk=network.pk %}">编辑</a>
+                    <a href="{% url 'seis:network_edit' pk=network.pk %}">编辑</a>
                 </td>
             </tr>
         </tbody>

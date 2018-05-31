@@ -1,0 +1,76 @@
+{% extends 'seisnet/base.html' %}
+
+
+{% block content %}
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th colspan="9" scope="col"><h1 align="center">台站详情</h1></th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr>
+                <th> 所属台网 </td>
+                <td>{{ station.network }}</td>
+            </tr>
+            <tr>
+                <th> 台站代码 </td>
+                <td>{{ station.code }}</td>
+            </tr>
+            <tr>
+                <th>台站名称(中文)</td>
+                <td>{{ station.zh_name }}</td>
+            </tr>
+            <tr>
+                <th>台站名称(英文)</td>
+                <td>{{ station.en_name }}</td>
+            </tr>
+            <tr>
+                <th>台站经度</td>
+                <td>{{ station.longitude }}</td>
+            </tr>
+            <tr>
+                <th>台站纬度</td>
+                <td>{{ station.latitude }}</td>
+            </tr>
+            <tr>
+                <th>数采列表</td>
+                <td>
+                <ul>
+                    {% for datalogger in station.datalogger_entities.all %}
+                        <li> {{ datalogger }} </li>
+                    {% endfor %}
+                </ul>
+                </td>
+            </tr>
+            <tr>
+                <th>地震仪列表</td>
+                <td>
+                <ul>
+                    {% for sensor in station.sensor_entities.all %}
+                        <li> {{ sensor }} </li>
+                    {% endfor %}
+                </ul>
+                </td>
+            </tr>
+            </tr>
+            <tr>
+                <th>台站状态</td>
+                <td>{{ station.get_status_display }}</td>
+            </tr>
+            <tr>
+                <th>台站位置描述</th>
+                <td>{{ station.location | default:"--" }}</td>
+            </tr>
+            <tr>
+                <th>台站描述</th>
+                <td>{{ station.describe | default:"--" }}</td>
+            </tr>
+        </tbody>
+
+    </table>
+    <a href="{% url 'seis:station_edit' pk=station.pk %}">编辑</a>
+
+{% endblock %}

@@ -33,7 +33,10 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'seisnet.apps.BasicinfoConfig',
     'equipment.apps.EquipmentConfig',
+
     'bootstrapform',
+    'dal',
+    'dal_select2',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -41,7 +44,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
 ]
 
 MIDDLEWARE = [

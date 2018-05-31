@@ -45,20 +45,22 @@ class NetworkDeviceAdmin(admin.ModelAdmin):
     exclude = ('category',)
 
 
-@admin.register(Manufacturer)
-class ManufacturerAdmin(admin.ModelAdmin):
-    form = ManufacturerForm
+# @admin.register(Manufacturer)
+# class ManufacturerAdmin(admin.ModelAdmin):
+    # form = ManufacturerForm
 
-    actions = ['custom_selected_delete']
-
-    def custom_selected_delete(self, request, queryset):
-        queryset.update(is_deleted=True)
-
-    custom_selected_delete.short_description = "删除选中项"
+    # actions = ['custom_selected_delete']
+    #
+    # def custom_selected_delete(self, request, queryset):
+    #     queryset.update(is_deleted=True)
+    #
+    # custom_selected_delete.short_description = "删除选中项"
 
 
 admin.site.register(SensorEntity)
 admin.site.register(DataloggerEntity)
+admin.site.register(Manufacturer)
+admin.site.register(ManufacturerCategory)
 
 admin.AdminSite.site_header = '流动台站运维日志管理系统'
 admin.AdminSite.site_title = '流动台站运维日志管理系统'

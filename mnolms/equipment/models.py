@@ -86,8 +86,8 @@ class Equipment(models.Model):
         super(Equipment, self).save(force_insert=False, force_update=False, using=None,
                                     update_fields=None)
 
-    # class Meta:
-    #     abstract = True
+    class Meta:
+        abstract = True
 
 
 # class Category(models.Model):
@@ -243,6 +243,12 @@ class NetworkDevice(Equipment):
     class Meta:
         verbose_name = "网络设备型号"
         verbose_name_plural = "网络设备型号"
+        ordering = ['-id']
+
+
+class InstockManager(models.Manager):
+    def get_queryset(self):
+        return super(InstockManager, self).get_queryset().filter(status=0)
 
 
 class EquipmentEntity(models.Model):
@@ -278,6 +284,9 @@ class EquipmentEntity(models.Model):
     remark = models.TextField(blank=True, null=True, verbose_name="备注")
     is_deleted = models.BooleanField(default=False, verbose_name="已删除")
 
+    class Meta:
+        abstract = True
+
 
 class SensorEntity(EquipmentEntity):
     """
@@ -285,7 +294,19 @@ class SensorEntity(EquipmentEntity):
     """
     model = models.ForeignKey("SensorModel",
                               on_delete=models.DO_NOTHING,
+                              related_name='sensor_set',
+                              related_query_name='sensor_entity',
                               verbose_name="地震仪型号")
+
+    station = models.ForeignKey('seisnet.Station',
+                                default=None,
+                                null=True,
+                                blank=True,
+                                on_delete=models.SET_NULL,
+                                related_name='sensor_entities',
+                                related_query_name='sensor_entity',
+                                verbose_name="所属台站"
+                                )
 
     def __str__(self):
         return "[{model}] {sn}".format(
@@ -295,6 +316,10 @@ class SensorEntity(EquipmentEntity):
     class Meta:
         verbose_name = "地震仪实体"
         verbose_name_plural = "地震仪实体"
+        ordering = ['-id']
+
+    objects = models.Manager()
+    instock = InstockManager()
 
 
 class DataloggerEntity(EquipmentEntity):
@@ -303,7 +328,19 @@ class DataloggerEntity(EquipmentEntity):
     """
     model = models.ForeignKey("DataloggerModel",
                               on_delete=models.DO_NOTHING,
+                              related_name="datalogger_set",
+                              related_query_name="datalogger_entity",
                               verbose_name="数采型号")
+
+    station = models.ForeignKey('seisnet.Station',
+                                default=None,
+                                null=True,
+                                blank=True,
+                                on_delete=models.SET_NULL,
+                                related_name='datalogger_entities',
+                                related_query_name='datalogger_entity',
+                                verbose_name="所属台站"
+                                )
 
     def __str__(self):
         return "[{model}] {sn}".format(
@@ -313,3 +350,9 @@ class DataloggerEntity(EquipmentEntity):
     class Meta:
         verbose_name = "数采实体"
         verbose_name_plural = "数采实体"
+        ordering = ['-id']
+
+    objects = models.Manager()
+    instock = InstockManager()
+
+
