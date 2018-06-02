@@ -15,10 +15,10 @@ urlpatterns = [
     path('station/detail/<int:pk>', views.station_detail, name='station_detail'),
     path('station/edit/<int:pk>', views.station_edit, name='station_edit'),
 
-    path('station/dataloggerentity-autocomplete',
+    path('station/dataloggerentity-autocomplete/<int:fk>',
          views.DataloggerEntityAutocomplete.as_view(),
          name='dataloggerentity-autocomplete'),
-    path('station/sensorentity-autocomplete',
+    path('station/sensorentity-autocomplete/<int:fk>',
          views.SensorEntityAutocomplete.as_view(),
          name='sensorentity-autocomplete'),
 

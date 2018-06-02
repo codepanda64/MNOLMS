@@ -35,7 +35,7 @@ def network_add(request):
             network.c_time = timezone.now()
             network.m_time = timezone.now()
             network.save()
-            return redirect('network_detail', pk=network.pk)
+            return redirect('seis:network_detail', pk=network.pk)
 
     else:
         form = NetworkForm()
@@ -86,6 +86,8 @@ def station_add(request):
 
 def station_edit(request, pk):
     station = get_object_or_404(Station, pk=pk)
+    old_datalogger_entities = station.datalogger_entities.all()
+    old_sensor_entities = station.sensor_entities.all()
 
     if request.method == "POST":
         form = StationForm(request.POST, instance=station)
@@ -95,6 +97,8 @@ def station_edit(request, pk):
             datalogger_entities = form.cleaned_data.get('datalogger_entities')
             sensor_entities = form.cleaned_data.get('sensor_entities')
             station.m_time = timezone.now()
+            old_datalogger_entities.update(station=None, status=0)
+            old_sensor_entities.update(station=None, status=0)
             datalogger_entities.update(station=station, status=1)
             sensor_entities.update(station=station, status=1)
 
@@ -103,13 +107,22 @@ def station_edit(request, pk):
             return redirect('seis:station_detail', pk=station.pk)
     else:
         form = StationForm(instance=station)
+        # form.fields['datalogger_entities'].queryset.append(station.datalogger_entities)
+        # form.fields['sensor_entities'].queryset.append(station.sensor_entities)
+
 
     return render(request, 'seisnet/station_edit.html', {'form': form})
 
 
 class DataloggerEntityAutocomplete(autocomplete.Select2QuerySetView):
+    # def __init__(self, *args, **kwargs):
+    #     super(DataloggerEntityAutocomplete, self).__init__(*args, **kwargs)
+
     def get_queryset(self):
-        qs = DataloggerEntity.instock.all()
+        if self.kwargs.get('fk'):
+            qs = DataloggerEntity.instock.all() | DataloggerEntity.objects.filter(station=self.kwargs.get('fk'))
+        else:
+            qs = DataloggerEntity.instock.all()
 
         if self.q:
             qs = qs.filter(
@@ -119,11 +132,29 @@ class DataloggerEntityAutocomplete(autocomplete.Select2QuerySetView):
 
         return qs
 
+    # def get_results(self, context):
+    #     super(DataloggerEntityAutocomplete, self).get_results(context)
+    #     station_pk = context['station']
+    #     return [
+    #         {
+    #             'station_pk': station_pk
+    #         }
+    #     ]
+        # return [
+        #     {
+        #         'selected': result
+        #     } for result in context['object_list']
+        # ]
+
 
 class SensorEntityAutocomplete(autocomplete.Select2QuerySetView):
 
     def get_queryset(self):
-        qs = SensorEntity.instock.all()
+        if self.kwargs.get('fk'):
+            qs = SensorEntity.instock.all() | SensorEntity.objects.filter(station=self.kwargs.get('fk'))
+        else:
+            qs = SensorEntity.instock.all()
+
 
         if self.q:
             qs = qs.filter(
