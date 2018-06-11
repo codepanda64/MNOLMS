@@ -1,12 +1,15 @@
 from django.db import models
 from django.contrib.contenttypes.fields import ContentType
 
+from django.db import connection
+
+from polymorphic.models import PolymorphicModel, PolymorphicManager
+
 
 class Manufacturer(models.Model):
     """
     制造商信息
     """
-
     CATEGORY_LIST = (
         (0, '测震仪器制造商'),
         (1, '供电系统制造商'),
@@ -43,7 +46,8 @@ class ManufacturerCategory(models.Model):
         return self.name
 
 
-class Equipment(models.Model):
+class Equipment(PolymorphicModel):
+# class Equipment(models.Model):
     """
     所有设备的共有字段
     设备信息
@@ -86,25 +90,8 @@ class Equipment(models.Model):
         super(Equipment, self).save(force_insert=False, force_update=False, using=None,
                                     update_fields=None)
 
-    class Meta:
-        abstract = True
-
-
-# class Category(models.Model):
-#     """
-#     设备分类
-#     """
-#     name = models.CharField(max_length=128, verbose_name="分类名称")
-#     remark = models.TextField(null=True, blank=True, verbose_name="备注")
-#
-#     is_deleted = models.BooleanField(default=False, verbose_name="已删除")
-#
-#     def __str__(self):
-#         return self.name
-#
-#     class Meta:
-#         verbose_name = "设备分类"
-#         verbose_name_plural = "设备分类"
+    # class Meta:
+        # abstract = True
 
 
 class SensorModel(Equipment):
@@ -118,16 +105,27 @@ class SensorModel(Equipment):
                                 blank=True,
                                 verbose_name="特征字符")
 
-    def __str__(self):
+
+    @property
+    def full_name(self):
         return "{manufacturer}-{model}-{features}".format(
             manufacturer=self.manufacturer,
             model=self.name,
             features=self.features
         )
 
+
+    # def __init__(self):
+    #     super(SensorModel, self).__init__()
+    #     self.category = 0
+
+    def __str__(self):
+        return self.full_name
+
     class Meta:
         verbose_name = "地震仪型号"
         verbose_name_plural = "地震仪型号"
+        unique_together = ('name', 'features')
 
 
 class DataloggerModel(Equipment):
@@ -141,16 +139,25 @@ class DataloggerModel(Equipment):
                                 blank=True,
                                 verbose_name="特征字符")
 
-    def __str__(self):
-        return "{manufacturer}-{name}-{features}".format(
+    @property
+    def full_name(self):
+        return "{manufacturer}-{model}-{features}".format(
             manufacturer=self.manufacturer,
-            name=self.name,
+            model=self.name,
             features=self.features
         )
+
+    # def __init__(self):
+    #     super(DataloggerModel, self).__init__()
+    #     self.category = 1
+
+    def __str__(self):
+        return self.full_name
 
     class Meta:
         verbose_name = "数采型号"
         verbose_name_plural = "数采型号"
+        unique_together = ('name', 'features',)
 
 
 class GPSAntenna(Equipment):
@@ -159,6 +166,10 @@ class GPSAntenna(Equipment):
     """
     cate_id = 3
     name = models.CharField(max_length=64, unique=True, verbose_name="型号")
+
+    def __init__(self):
+        super(GPSAntenna, self).__init__()
+        self.category = 3
 
     def __str__(self):
         return self.name
@@ -186,11 +197,13 @@ class PowerSupply(Equipment):
     )
     name = models.CharField(max_length=64, unique=True, verbose_name="型号")
 
-    cate_id = 2
-
     type = models.CharField(choices=POWERSUPPLY_TYPE,
                             max_length=2, default=SMART_POWER,
                             verbose_name="电源类型")
+
+    # def __init__(self):
+    #     super(PowerSupply, self).__init__()
+    #     self.category = 2
 
     def __str__(self):
         return "[{type}] {manufacturer}-{name}".format(
@@ -219,20 +232,13 @@ class NetworkDevice(Equipment):
     )
     name = models.CharField(max_length=64, unique=True, verbose_name="型号")
 
-    cate_id = 4
-
     type = models.CharField(choices=NETWORK_TYPE,
                             max_length=2, default=ROUTER,
                             verbose_name="网络设备类型")
 
-    def change_category(self):
-        self.category = self.cate_id
-
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
-        self.change_category()
-        super(GPSAntenna, self).save(force_insert=False, force_update=False, using=None,
-                                     update_fields=None)
+    # def __init__(self):
+    #     super(NetworkDevice, self).__init__()
+    #     self.category = 4
 
     def __str__(self):
         return "[{type}] {manufacturer}-{name}".format(
@@ -245,13 +251,57 @@ class NetworkDevice(Equipment):
         verbose_name_plural = "网络设备型号"
         ordering = ['-id']
 
+class EquimpmentItem(models.Model):
+    station = models.ForeignKey("seisnet.Station", on_delete=models.CASCADE, verbose_name="所属台站")
+    equipment = models.ForeignKey("Equipment", on_delete=models.CASCADE, verbose_name="设备列表")
+    quantity = models.PositiveSmallIntegerField(default=1, verbose_name="数量")
 
-class InstockManager(models.Manager):
-    def get_queryset(self):
-        return super(InstockManager, self).get_queryset().filter(status=0)
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+
+        super(EquimpmentItem, self).save(force_insert, force_update, using,
+                                            update_fields)
+        if not self.equipment or self.quantity <= 0:
+            self.delete()
+
+# class NetworkDeviceItem(models.Model):
+#     network_device = models.ForeignKey("NetworkDevice", null=True, blank=True,
+#                                        on_delete=models.SET_NULL, verbose_name="网络设备型号")
+#     quantity = models.PositiveSmallIntegerField(default=1, verbose_name="数量")
+#
+#     station = models.ForeignKey("seisnet.Station", on_delete=models.CASCADE, related_name="network_device_item",
+#                                    verbose_name="所属台站")
+#
+#     def save(self, force_insert=False, force_update=False, using=None,
+#              update_fields=None):
+#
+#         super(NetworkDeviceItem, self).save(force_insert, force_update, using,
+#                                             update_fields)
+#         if not self.network_device or self.quantity <= 0:
+#             self.delete()
+
+        # print(connection.queries)
 
 
-class EquipmentEntity(models.Model):
+class EquipmentEntityManager(PolymorphicManager):
+# class EquipmentEntityManager(models.Manager):
+    def instock(self):
+        '''
+        库存
+        '''
+        return super(EquipmentEntityManager, self).get_queryset().filter(status=0)
+
+    def used(self):
+        '''在线'''
+        return super(EquipmentEntityManager, self).get_queryset().filter(status=1)
+
+    def malfunction(self):
+        '''故障'''
+        return super(EquipmentEntityManager, self).get_queryset().filter(status=2)
+
+
+class EquipmentEntity(PolymorphicModel):
+# class EquipmentEntity(models.Model):
     """
     设备实体共有信息
     """
@@ -284,8 +334,10 @@ class EquipmentEntity(models.Model):
     remark = models.TextField(blank=True, null=True, verbose_name="备注")
     is_deleted = models.BooleanField(default=False, verbose_name="已删除")
 
-    class Meta:
-        abstract = True
+    # class Meta:
+    #     abstract = True
+
+    objects = EquipmentEntityManager()
 
 
 class SensorEntity(EquipmentEntity):
@@ -318,8 +370,7 @@ class SensorEntity(EquipmentEntity):
         verbose_name_plural = "地震仪实体"
         ordering = ['-id']
 
-    objects = models.Manager()
-    instock = InstockManager()
+    objects = EquipmentEntityManager()
 
 
 class DataloggerEntity(EquipmentEntity):
@@ -352,7 +403,6 @@ class DataloggerEntity(EquipmentEntity):
         verbose_name_plural = "数采实体"
         ordering = ['-id']
 
-    objects = models.Manager()
-    instock = InstockManager()
+    objects = EquipmentEntityManager()
 
 

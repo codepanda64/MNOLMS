@@ -9,6 +9,7 @@ django-bootstrap-form = "*"
 django-bootstrap-datepicker = "*"
 django-autocomplete-light = "*"
 six = "*"
+django-polymorphic = "*"
 
 [requires]
 python_version = "3.6"

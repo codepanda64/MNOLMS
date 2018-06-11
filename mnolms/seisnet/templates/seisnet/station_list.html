@@ -1,0 +1,48 @@
+{% extends 'seisnet/base.html' %}
+
+
+{% block content %}
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th colspan="9" scope="col"><h1 align="center">台站列表</h1></th>
+            </tr>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">台站代码</th>
+                <th scope="col">台站名(中文)</th>
+                <th scope="col">台站名(英文)</th>
+                <th scope="col">台站经度</th>
+                <th scope="col">台站纬度</th>
+                <th scope="col">台站高程</th>
+{#                <th scope="col">开始时间</th>#}
+{#                <th scope="col">结束时间</th>#}
+                <th scope="col">状态</th>
+                <th scope="col">操作</th>
+            </tr>
+        </thead>
+
+        {% for station in stations %}
+        <tbody>
+            <tr>
+                <th scope="row">{{ forloop.counter }}</th>
+                <td>
+                    <a href="{% url 'seis:station_detail' pk=station.pk %}">{{ station.code }}</a>
+                </td>
+                <td>{{ station.zh_name }}</td>
+                <td>{{ station.en_name }}</td>
+                <td>{{ station.longitude }}</td>
+                <td>{{ station.latitude }}</td>
+                <td>{{ station.altitude }}</td>
+                <td>{{ station.get_status_display }}</td>
+                <td>
+                    <a href="{% url 'seis:station_edit' pk=station.pk %}">编辑</a>
+                </td>
+            </tr>
+        </tbody>
+        {% endfor %}
+
+    </table>
+
+{% endblock %}

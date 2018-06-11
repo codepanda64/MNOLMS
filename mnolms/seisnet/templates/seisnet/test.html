@@ -1,0 +1,13 @@
+{% extends 'seisnet/base.html' %}
+{% load bootstrap %}
+{% load static %}
+
+{% block content %}
+    <form method="POST", role="form" class="form-horizontal">
+        {{ form | bootstrap_horizontal }}
+        {% csrf_token %}
+    </form>
+    <script type="text/javascript" src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
+    {{ form.media }}
+
+{% endblock %}

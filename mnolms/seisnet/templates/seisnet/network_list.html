@@ -24,7 +24,7 @@
         {% for network in networks %}
         <tbody>
             <tr>
-                <th scope="row">{{ network.pk }}</th>
+                <th scope="row">{{ forloop.counter }}</th>
                 <td>
                     <a href="{% url 'seis:network_detail' pk=network.pk %}">{{ network.code }}</a>
                 </td>

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'bootstrapform',
     'dal',
     'dal_select2',
+    'polymorphic',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
 ]
 
 MIDDLEWARE = [
@@ -125,3 +127,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+SILENCED_SYSTEM_CHECKS = ['fields.E300', 'fields.E307']

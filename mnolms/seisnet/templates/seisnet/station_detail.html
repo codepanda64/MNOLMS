@@ -12,52 +12,51 @@
 
         <tbody>
             <tr>
-                <th> 所属台网 </td>
+                <th> 所属台网 </th>
                 <td>{{ station.network }}</td>
             </tr>
             <tr>
-                <th> 台站代码 </td>
+                <th> 台站代码 </th>
                 <td>{{ station.code }}</td>
             </tr>
             <tr>
-                <th>台站名称(中文)</td>
+                <th>台站名称(中文)</th>
                 <td>{{ station.zh_name }}</td>
             </tr>
             <tr>
-                <th>台站名称(英文)</td>
+                <th>台站名称(英文)</th>
                 <td>{{ station.en_name }}</td>
             </tr>
             <tr>
-                <th>台站经度</td>
+                <th>台站经度</th>
                 <td>{{ station.longitude }}</td>
             </tr>
             <tr>
-                <th>台站纬度</td>
+                <th>台站纬度</th>
                 <td>{{ station.latitude }}</td>
             </tr>
             <tr>
-                <th>数采列表</td>
+                <th>数采列表</th>
                 <td>
                 <ul>
-                    {% for datalogger in station.datalogger_entities.all %}
+                    {% for datalogger in station.dataloggers %}
                         <li> {{ datalogger }} </li>
                     {% endfor %}
                 </ul>
                 </td>
             </tr>
             <tr>
-                <th>地震仪列表</td>
+                <th>地震仪列表</th>
                 <td>
                 <ul>
-                    {% for sensor in station.sensor_entities.all %}
+                    {% for sensor in station.sensors %}
                         <li> {{ sensor }} </li>
                     {% endfor %}
                 </ul>
                 </td>
             </tr>
-            </tr>
             <tr>
-                <th>台站状态</td>
+                <th>台站状态</th>
                 <td>{{ station.get_status_display }}</td>
             </tr>
             <tr>

@@ -1,6 +1,10 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 
+from equipment.models import (
+    DataloggerEntity,
+    SensorEntity,
+)
 
 class Network(models.Model):
     """
@@ -74,6 +78,19 @@ class Station(models.Model):
             code=self.code,
             zh_name=self.zh_name,
             en_name=self.en_name)
+
+    @property
+    def dataloggers(self):
+        instance = self
+        qs = DataloggerEntity.objects.filter(station=instance)
+        return qs
+
+    @property
+    def sensors(self):
+        instance = self
+        qs = SensorEntity.objects.filter(station=instance)
+        # qs = SensorEntity.objects.filter_by_instance(instance)
+        return qs
 
 
 # class EquipmentItem(models.Model):
