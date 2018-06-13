@@ -36,21 +36,11 @@
                 <td>{{ station.latitude }}</td>
             </tr>
             <tr>
-                <th>数采列表</th>
+                <th>测震设备列表</th>
                 <td>
                 <ul>
-                    {% for datalogger in station.dataloggers %}
-                        <li> {{ datalogger }} </li>
-                    {% endfor %}
-                </ul>
-                </td>
-            </tr>
-            <tr>
-                <th>地震仪列表</th>
-                <td>
-                <ul>
-                    {% for sensor in station.sensors %}
-                        <li> {{ sensor }} </li>
+                    {% for seismological in station.seismological_equipments %}
+                        <li> {{ seismological }} </li>
                     {% endfor %}
                 </ul>
                 </td>

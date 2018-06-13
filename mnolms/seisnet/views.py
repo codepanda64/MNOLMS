@@ -3,13 +3,25 @@ from django.db.models import Q
 from django.utils import timezone
 from django.views.generic import DetailView, ListView, CreateView, FormView
 from django.urls import reverse, reverse_lazy
-from django.forms import inlineformset_factory
+from django.forms import formset_factory, inlineformset_factory
 
 from dal import autocomplete
 
 from .models import Network, Station
-from equipment.models import DataloggerEntity, SensorEntity, EquimpmentItem
-from .forms import NetworkForm, StationForm, SensorEntityForm
+from equipment.models import (
+    Equipment,
+    PowerSupplyModel,
+    NetworkDeviceModel,
+    SeismologicalEquipmentEntity,
+    # EquimpmentItem,
+)
+
+from .forms import (
+    NetworkForm,
+    StationForm,
+    PowerSupplyItemForm,
+    NetworkDeviceItemForm,
+)
 
 
 class NetworkListView(ListView):
@@ -73,8 +85,6 @@ class StationListView(ListView):
 
 def station_detail(request, pk):
     station = get_object_or_404(Station, pk=pk)
-    print(station.sensor_entities)
-    print(station.datalogger_entities)
     return render(request, 'seisnet/station_detail.html',
                   {'station': station})
 
@@ -82,13 +92,12 @@ def station_detail(request, pk):
 def station_add(request):
     station = Station()
 
-    EquimpmentItemFormSet = inlineformset_factory(Station, EquimpmentItem, fields=('network_device', 'quantity'),
-                                                     extra=2)
+    # EquimpentItemFormSet = inlineformset_factory(Station, EquimpmentItem, fields=('equipment', 'quantity'), extra=1)
 
-    equimpment_item_form_set = EquimpmentItemFormSet(instance=station)
-    # equimpment_item_form_set = NetworkDeviceItemFormSet(instance=station)
-
-    # network_item_form = NetworkDeviceItemForm(instance=station)
+    PowerSupplyItemFormSet = formset_factory(form=PowerSupplyItemForm)
+    NetworkDeviceItemFormSet = formset_factory(form=NetworkDeviceItemForm)
+    powersupply_item_form_set = PowerSupplyItemFormSet(form_kwargs={'station': station})
+    network_device_item_form_set = NetworkDeviceItemFormSet(form_kwargs={'station': station})
 
     if request.method == "POST":
         station_form = StationForm(request.POST)
@@ -96,19 +105,46 @@ def station_add(request):
             station = station_form.save(commit=False)
             station.c_time = timezone.now()
             station.m_time = timezone.now()
+            seismological_equipments = station_form.cleaned_data.get('seismological_equipments')
 
-            datalogger_entities = station_form.cleaned_data.get('datalogger_entities')
-            sensor_entities = station_form.cleaned_data.get('sensor_entities')
-
+            # print(seismological_equipments)
             station.save()
-            # station.network_device_item.save()
-            # network_item_form = NetworkDeviceItemForm(station=station)
-            equimpment_item_form_set = EquimpmentItemFormSet(request.POST, request.FILES, instance=station)
-            if equimpment_item_form_set.is_valid():
-                equimpment_item_form_set.save()
 
-            datalogger_entities.update(station=station, status=1)
-            sensor_entities.update(station=station, status=1)
+            # datalogger_entities = station_form.cleaned_data.get('datalogger_entities')
+            # sensor_entities = station_form.cleaned_data.get('sensor_entities')
+
+            powersupply_item_form_set = PowerSupplyItemFormSet(request.POST, request.FILES,
+                                                               form_kwargs={'station': station})
+            network_device_item_form_set = NetworkDeviceItemFormSet(request.POST, request.FILES,
+                                                                    form_kwargs={'station': station})
+
+            print("before:")
+            print(powersupply_item_form_set)
+
+            if powersupply_item_form_set.is_valid() and network_device_item_form_set.is_valid():
+                print("true:")
+                print(powersupply_item_form_set)
+                powersupply_item_form_set.save()
+                network_device_item_form_set.save()
+
+                # for form in powersupply_item_form_set:
+                #     powersupply_item = form.save(commit=False)
+                #     powersupply_item.station = station
+                #     print(form)
+                #     print(powersupply_item)
+                #
+                #     powersupply_item.save()
+                #
+                # for form in network_device_item_form_set:
+                #     network_device_item = form.save(commit=False)
+                #     network_device_item.station = station
+                #     network_device_item.save()
+
+                # powersupply_item_form_set.save()
+                # network_device_item_form_set.save()
+
+            # print(station)
+            seismological_equipments.update(station=station, status=1)
             url = reverse('seis:station_detail', kwargs={'pk': station.pk})
             # return redirect('station_detail', pk=station.pk)
             return redirect(url)
@@ -119,105 +155,68 @@ def station_add(request):
 
     return render(request, 'seisnet/station_edit.html', {
         'station_form': station_form,
-        'equimpment_item_form_set': equimpment_item_form_set,
+        'powersupply_item_form_set': powersupply_item_form_set,
+        'network_device_item_form_set': network_device_item_form_set,
     })
 
 
-def station_edit(request, pk):
-    station = get_object_or_404(Station, pk=pk)
-    old_datalogger_entities = station.dataloggers
-    old_sensor_entities = station.sensors
-
-    old_datalogger_entities_id = old_datalogger_entities.values_list('id', flat=True)
-    old_sensor_entities_id = old_sensor_entities.values_list('id', flat=True)
-
-    EquimpmentItemFormSet = inlineformset_factory(Station, EquimpmentItem, fields=('network_device', 'quantity'),
-                                                     extra=2)
-    equimpment_item_form_set = EquimpmentItemFormSet(request.POST, request.FILES, instance=station)
-
-    if request.method == "POST":
-        station_form = StationForm(request.POST, instance=station)
-
-        if station_form.is_valid():
-            station = station_form.save(commit=False)
-            dataloggers = station_form.cleaned_data.get('dataloggers')
-            sensors = station_form.cleaned_data.get('sensors')
-            station.m_time = timezone.now()
-
-            if station_form.has_changed():
-                if 'dataloggers' in station_form.changed_data or 'sensors' in station_form.changed_data:
-
-                    old_datalogger_entities.update(station=None, status=0)
-                    old_sensor_entities.update(station=None, status=0)
-                    dataloggers.update(station=station, status=1)
-                    sensors.update(station=station, status=1)
-
-            if equimpment_item_form_set.is_valid():
-                # print(equimpment_item_form_set.forms[0].fields['network_device'])
-                equimpment_item_form_set.save()
-
-            station.save()
-
-            return redirect('seis:station_detail', pk=station.pk)
-    else:
-        station_form = StationForm(instance=station)
-        station_form.fields['dataloggers'].initial = old_datalogger_entities_id
-        station_form.fields['sensors'].initial = old_sensor_entities_id
-        station_form.fields['dataloggers'].widget.url = reverse_lazy('seis:dataloggerentity-autocomplete',
-                                                             kwargs={'fk': pk})
-        station_form.fields['sensors'].widget.url = reverse_lazy('seis:sensorentity-autocomplete',
-                                                                         kwargs={'fk': pk})
-        equimpment_item_form_set = EquimpmentItemFormSet(instance=station)
-        # form.fields['datalogger_entities'].queryset.append(station.datalogger_entities)
-        # form.fields['sensor_entities'].queryset.append(station.sensor_entities)
-
-    # return render(request, 'seisnet/station_edit.html', {'form': form})
-    return render(request, 'seisnet/station_edit.html', {
-        'station_form': station_form,
-        'equimpment_item_form_set': equimpment_item_form_set,
-    })
+# def station_edit(request, pk):
+#     station = get_object_or_404(Station, pk=pk)
+#     old_seismological_equipments = station.seismological_equipments
+#     old_seismological_equipments_id = old_seismological_equipments.values_list('id', flat=True)
+#
+#     # EquimpmentItemFormSet = inlineformset_factory(Station, EquimpmentItem, fields=('equipment', 'quantity'), extra=0)
+#
+#     network_device_itme_form_set = EquimpmentItemFormSet(request.POST, request.FILES, instance=station,
+#                                                          form=PowerSupplyItemForm,)
+#
+#     powersupply_itme_form_set = EquimpmentItemFormSet(request.POST, request.FILES, instance=station,
+#                                                       form=PowerSupplyItemForm, )
+#
+#     if request.method == "POST":
+#         station_form = StationForm(request.POST, instance=station)
+#
+#         if station_form.is_valid():
+#             station = station_form.save(commit=False)
+#             seismological_equipments = station_form.cleaned_data['seismological_equipments']
+#             # dataloggers = station_form.cleaned_data.get('dataloggers')
+#             # sensors = station_form.cleaned_data.get('sensors')
+#             station.m_time = timezone.now()
+#
+#             if station_form.has_changed():
+#                 if 'seismological_equipments' in station_form.changed_data:
+#                     old_seismological_equipments.update(station=None, status=0)
+#                     seismological_equipments.update(station=station, status=1)
+#
+#             if network_device_itme_form_set.is_valid() and powersupply_itme_form_set.is_valid():
+#                 powersupply_itme_form_set.save()
+#                 network_device_itme_form_set.save()
+#
+#             station.save()
+#
+#             return redirect('seis:station_detail', pk=station.pk)
+#     else:
+#         station_form = StationForm(instance=station)
+#         station_form.fields['seismological_equipments'].initial = old_seismological_equipments_id
+#         station_form.fields['seismological_equipments'].widget.url = reverse_lazy('seis:seisentity-autocomplete',
+#                                                                                   kwargs={'fk': pk})
+#         # network_device_itme_form_set = NetworkDeviceItemFormSet(instance=station)
+#         # powersupply_itme_form_set = PowerSupplyItemFormSet(instance=station)
+#
+#     return render(request, 'seisnet/station_edit.html', {
+#         'station_form': station_form,
+#         'network_device_itme_form_set': network_device_itme_form_set,
+#         'powersupply_item_form_set': powersupply_itme_form_set,
+#     })
 
 
-class DataloggerEntityAutocomplete(autocomplete.Select2QuerySetView):
-    # def __init__(self, *args, **kwargs):
-    #     super(DataloggerEntityAutocomplete, self).__init__(*args, **kwargs)
-
+class SeismologicalEquipmentEntityAutocomplete(autocomplete.Select2QuerySetView):
     def get_queryset(self):
         if self.kwargs.get('fk'):
-            qs = DataloggerEntity.objects.instock() | DataloggerEntity.objects.filter(station=self.kwargs.get('fk'))
+            station = Station.objects.get(id=self.kwargs.get('fk'))
+            qs = SeismologicalEquipmentEntity.objects.instock() | SeismologicalEquipmentEntity.objects.filter_by_instance(station)
         else:
-            qs = DataloggerEntity.objects.instock()
-
-        if self.q:
-            qs = qs.filter(
-                Q(sn__icontains=self.q) |
-                Q(model__name__icontains=self.q)
-            )
-
-        return qs
-
-    # def get_results(self, context):
-    #     super(DataloggerEntityAutocomplete, self).get_results(context)
-    #     station_pk = context['station']
-    #     return [
-    #         {
-    #             'station_pk': station_pk
-    #         }
-    #     ]
-    # return [
-    #     {
-    #         'selected': result
-    #     } for result in context['object_list']
-    # ]
-
-
-class SensorEntityAutocomplete(autocomplete.Select2QuerySetView):
-
-    def get_queryset(self):
-        if self.kwargs.get('fk'):
-            qs = SensorEntity.objects.instock() | SensorEntity.objects.filter(station=self.kwargs.get('fk'))
-        else:
-            qs = SensorEntity.objects.instock()
+            qs = SeismologicalEquipmentEntity.objects.instock()
 
         if self.q:
             qs = qs.filter(
@@ -228,19 +227,57 @@ class SensorEntityAutocomplete(autocomplete.Select2QuerySetView):
         return qs
 
 
-def test(request, pk):
-    selected_id_list = SensorEntity.objects.filter(station=pk).values_list('id', flat=True)
-    print(selected_id_list)
-    form = SensorEntityForm()
-    form.fields['sensor_entities'].initial = selected_id_list
-    print(form.as_p())
-    # form.fields['sensor_entities'].initial = selected_id_list
-    form.fields['sensor_entities'].widget.url = reverse_lazy('seis:sensorentity-autocomplete',
-                                                             kwargs={'fk': pk})
-    return render(request, 'seisnet/test.html', {
-        'form': form,
-    })
-# class UpdateView(UpdateView):
+# class DataloggerEntityAutocomplete(autocomplete.Select2QuerySetView):
+#
+#     def get_queryset(self):
+#         if self.kwargs.get('fk'):
+#             qs = DataloggerEntity.objects.instock() | DataloggerEntity.objects.filter(station=self.kwargs.get('fk'))
+#         else:
+#             qs = DataloggerEntity.objects.instock()
+#
+#         if self.q:
+#             qs = qs.filter(
+#                 Q(sn__icontains=self.q) |
+#                 Q(model__name__icontains=self.q)
+#             )
+#
+#         return qs
+
+
+# class SensorEntityAutocomplete(autocomplete.Select2QuerySetView):
+#
+#     def get_queryset(self):
+#         if self.kwargs.get('fk'):
+#             qs = SensorEntity.objects.instock() | SensorEntity.objects.filter(station=self.kwargs.get('fk'))
+#         else:
+#             qs = SensorEntity.objects.instock()
+#
+#         if self.q:
+#             qs = qs.filter(
+#                 Q(sn__icontains=self.q) |
+#                 Q(model__name__icontains=self.q)
+#             )
+#
+#         return qs
+#
+#
+def test(request):
+    form = PowerSupplyItemForm()
+    return render(request, 'seisnet/test.html', {'form': form})
+
+# def test(request, pk):
+#     selected_id_list = SensorEntity.objects.filter(station=pk).values_list('id', flat=True)
+#     print(selected_id_list)
+#     form = SensorEntityForm()
+#     form.fields['sensor_entities'].initial = selected_id_list
+#     print(form.as_p())
+#     # form.fields['sensor_entities'].initial = selected_id_list
+#     form.fields['sensor_entities'].widget.url = reverse_lazy('seis:sensorentity-autocomplete',
+#                                                              kwargs={'fk': pk})
+#     return render(request, 'seisnet/test.html', {
+#         'form': form,
+#     })
+# # class UpdateView(UpdateView):
 #     model = Station
 #     form_class = StationForm
 #     template_name = 'seisnet/station_edit.html'

@@ -11,7 +11,7 @@ from django.db.models.signals import post_init, pre_save, post_save
 from django.core.signals import request_finished
 
 from .models import Station
-from equipment.models import DataloggerEntity, SensorEntity
+# from equipment.models import DataloggerEntity, SensorEntity
 
 
 @receiver(request_finished, dispatch_uid="request_finished")
