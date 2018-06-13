@@ -404,6 +404,7 @@ class SeismologicalEquipmentEntity(models.Model):
         return self.full_name
 
     class Meta:
+        ordering = ['-id']
         verbose_name = "测震仪器实体"
         verbose_name_plural = "测震仪器实体"
 
